@@ -1,6 +1,6 @@
 <template>
     <div class="todo-item">
-      <input type="checkbox" v-model="todo.completed" />
+      <input type="checkbox" :checked="todo.completed" @change="toggleCompleted" />
       <span>{{ todo.title }}</span>
       <button @click="removeTodo">Remove</button>
     </div>
@@ -12,6 +12,9 @@
     methods: {
       removeTodo() {
         this.$emit('remove', this.todo);
+      },
+      toggleCompleted() {
+        this.$emit('toggle-completed', this.todo);
       }
     }
   }
