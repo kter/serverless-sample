@@ -36,12 +36,12 @@ export default {
   },
   methods: {
     async addTodo() {
-      const response = await axios.post('/todos', { title: this.newTodo });
-      this.todos.push(response.data);
+      const response = await axios.post('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos', { title: this.newTodo });
+      this.todos.push(response.data.todos);
       this.newTodo = '';
     },
     async removeTodo(todo) {
-      await axios.delete(`/todos/${todo.id}`);
+      await axios.delete(`https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos/${todo.id}`);
       this.todos = this.todos.filter(t => t.id !== todo.id);
     },
     toggleCompleted(todo) {
@@ -49,8 +49,8 @@ export default {
     },
   },
   async created() {
-    const response = await axios.get('/todos');
-    this.todos = response.data;
+    const response = await axios.get('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos');
+    this.todos = response.data.todos;
   }
 }
 </script>

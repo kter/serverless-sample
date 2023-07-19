@@ -1,14 +1,15 @@
-import * as cdk from '@aws-cdk/core';
-import * as dynamodb from '@aws-cdk/aws-dynamodb';
-import * as apigw from '@aws-cdk/aws-apigateway';
-import * as iam from '@aws-cdk/aws-iam';
-import * as events from '@aws-cdk/aws-events';
-import * as targets from '@aws-cdk/aws-events-targets';
-import * as sns from '@aws-cdk/aws-sns';
-import * as subs from '@aws-cdk/aws-sns-subscriptions';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as apigw from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 
 export class TodoAppStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Create DynamoDB table
@@ -24,11 +25,6 @@ export class TodoAppStack extends cdk.Stack {
     const rule = new events.Rule(this, 'TodoReminder', {
       schedule: events.Schedule.cron({ minute: '0', hour: '8' }),
     });
-
-    // Grant necessary permissions
-    rule.grantPutEvents(table);
-    table.grantReadWriteData(rule);
-    topic.grantPublish(rule);
 
     // Add targets to rule
     rule.addTarget(new targets.SnsTopic(topic, {
@@ -54,6 +50,11 @@ export class TodoAppStack extends cdk.Stack {
         dataTraceEnabled: true,
         stageName: 'prod',
       },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigw.Cors.ALL_ORIGINS,
+        allowMethods: apigw.Cors.ALL_METHODS,
+        allowHeaders: ['*'],
+      },
     });
 
     const getTodosIntegration = new apigw.AwsIntegration({
@@ -66,6 +67,9 @@ export class TodoAppStack extends cdk.Stack {
             statusCode: '200',
             responseTemplates: {
               'application/json': '{"todos": $input.json("$.Items")}',
+            },
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
             },
           },
         ],
@@ -86,6 +90,9 @@ export class TodoAppStack extends cdk.Stack {
             responseTemplates: {
               'application/json': '{"todos": $input.json("$.Items")}',
             },
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
+            },
           },
         ],
         requestTemplates: {
@@ -105,6 +112,9 @@ export class TodoAppStack extends cdk.Stack {
             responseTemplates: {
               'application/json': '{"todos": $input.json("$.Items")}',
             },
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
+            },
           },
         ],
         requestTemplates: {
@@ -114,9 +124,49 @@ export class TodoAppStack extends cdk.Stack {
     });
 
     const todoResource = api.root.addResource('todos');
-    todoResource.addMethod('GET', getTodosIntegration);
-    todoResource.addMethod('POST', addTodosIntegration);
-    todoResource.addResource('{id}').addMethod('DELETE', removeTodosIntegration);
+    const responseModel = api.addModel('ResponseModel', {
+      contentType: 'application/json',
+      modelName: 'ResponseModel',
+      schema: {
+        schema: apigw.JsonSchemaVersion.DRAFT4,
+        title: 'responseModel',
+        type: apigw.JsonSchemaType.OBJECT,
+      },
+    });
+    
+    todoResource.addMethod('GET', getTodosIntegration, {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+        },
+        responseModels: {
+          'application/json': responseModel,
+        },
+      }],
+    });
+    todoResource.addMethod('POST', addTodosIntegration, {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+        },
+        responseModels: {
+          'application/json': responseModel,
+        },
+      }],
+    });
+    todoResource.addResource('{id}').addMethod('DELETE', removeTodosIntegration, {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+        },
+        responseModels: {
+          'application/json': responseModel,
+        },
+      }],
+    });
   }
 }
 
