@@ -1,7 +1,7 @@
 <template>
     <div class="todo-item">
       <input type="checkbox" :checked="todo.completed" @change="toggleCompleted" />
-      <span>{{ todo.title }}</span>
+      <span>{{ todo.title.S }}</span>
       <button @click="removeTodo">Remove</button>
     </div>
   </template>
@@ -25,4 +25,5 @@
     /* Styles here */
   }
   </style>
+  
   
