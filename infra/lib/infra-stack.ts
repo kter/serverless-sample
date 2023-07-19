@@ -16,6 +16,7 @@ export class TodoAppStack extends cdk.Stack {
     const table = new dynamodb.Table(this, 'Todos', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
     });
 
     // Create SNS topic
