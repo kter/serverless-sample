@@ -28,7 +28,7 @@
       };
   
       const toggleCompleted = (completed) => {
-        emit('toggle-completed', { ...todo.value, completed: { S: completed.toString() } });
+        emit('toggle-completed', { ...todo.value, completed: { BOOL: completed } });
       };
   
       return {

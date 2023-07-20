@@ -7,6 +7,7 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 
 export class TodoAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -209,7 +210,22 @@ export class TodoAppStack extends cdk.Stack {
       }],
     });
 
-    todoResourceById.addMethod('PUT', updateTodosIntegration, {
+    // create the Lambda function
+    const updateTodoFunction = new lambda.Function(this, 'UpdateTodoFunction', {
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'updateTodo.handler',
+      runtime: lambda.Runtime.NODEJS_14_X,
+      environment: {
+        TABLE_NAME: table.tableName,
+      },
+    });
+
+    // Grant the Lambda function the necessary permissions
+    table.grantReadWriteData(updateTodoFunction);
+
+    // Create the API Gateway integration
+    const updateTodoIntegration = new apigw.LambdaIntegration(updateTodoFunction);
+    todoResourceById.addMethod('PUT', updateTodoIntegration, {
       methodResponses: [{
         statusCode: '200',
         responseParameters: {

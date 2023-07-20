@@ -58,10 +58,7 @@ export default {
 
     const fetchTodos = async () => {
       const response = await axios.get('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos');
-      todos.value = response.data.todos.map(todo => ({
-        ...todo,
-        completed: { BOOL: todo.completed.S === 'true' }
-      }));
+      todos.value = response.data.todos;
     };
 
     fetchTodos();
