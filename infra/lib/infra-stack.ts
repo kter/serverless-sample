@@ -25,13 +25,8 @@ export class TodoAppStack extends cdk.Stack {
 
     // Create EventBridge rule
     const rule = new events.Rule(this, 'TodoReminder', {
-      schedule: events.Schedule.cron({ minute: '0', hour: '8' }),
+      schedule: events.Schedule.cron({ minute: '0', hour: '0' }),
     });
-
-    // Add targets to rule
-    rule.addTarget(new targets.SnsTopic(topic, {
-      message: events.RuleTargetInput.fromText('A todo item is due within 24 hours'),
-    }));
 
     // Subscribe to SNS topic
     topic.addSubscription(new subs.EmailSubscription('user@example.com'));
@@ -210,7 +205,6 @@ export class TodoAppStack extends cdk.Stack {
       }],
     });
 
-    // create the Lambda function
     const updateTodoFunction = new lambda.Function(this, 'UpdateTodoFunction', {
       code: lambda.Code.fromAsset('lambda'),
       handler: 'updateTodo.handler',
@@ -219,9 +213,20 @@ export class TodoAppStack extends cdk.Stack {
         TABLE_NAME: table.tableName,
       },
     });
-
-    // Grant the Lambda function the necessary permissions
     table.grantReadWriteData(updateTodoFunction);
+
+    const notifyTodoFunction = new lambda.Function(this, 'NotifyTodoFunction', {
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'notifyTodo.handler',
+      runtime: lambda.Runtime.NODEJS_14_X,
+      environment: {
+        TABLE_NAME: table.tableName,
+        TOPIC_ARN: topic.topicArn,
+      },
+    });
+    table.grantReadData(notifyTodoFunction);
+    topic.grantPublish(notifyTodoFunction);
+    rule.addTarget(new targets.LambdaFunction(notifyTodoFunction));
 
     // Create the API Gateway integration
     const updateTodoIntegration = new apigw.LambdaIntegration(updateTodoFunction);
