@@ -97,7 +97,7 @@ export class TodoAppStack extends cdk.Stack {
           },
         ],
         requestTemplates: {
-          'application/json': `{"TableName": "${table.tableName}", "Item": {"id": {"S": "$context.requestId"}, "title": {"S": "$input.path("$.title")"}, "completed": {"BOOL": false}}}`,
+          'application/json': `{"TableName": "${table.tableName}", "Item": {"id": {"S": "$context.requestId"}, "title": {"S": "$input.path("$.title")"}, "completed": {"S": "false"}}}`,
         },
       },
     });
@@ -120,6 +120,43 @@ export class TodoAppStack extends cdk.Stack {
         ],
         requestTemplates: {
           'application/json': `{"TableName": "${table.tableName}", "Key": {"id": {"S": "$input.path("$.id")"}}}`,
+        },
+      },
+    });
+
+    const updateTodosIntegration = new apigw.AwsIntegration({
+      service: 'dynamodb',
+      action: 'UpdateItem',
+      options: {
+        credentialsRole: apiGwRole,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseTemplates: {
+              'application/json': '{"todos": $input.json("$.Items")}',
+            },
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
+            },
+          },
+        ],
+        requestTemplates: {
+          'application/json': `{
+            "TableName": "${table.tableName}",
+            "Key": {
+              "id": {
+                "S": "$input.path('$.id.S')"
+              },
+            },
+            "ExpressionAttributeNames": {
+              "#C": "completed",
+            },
+            "ExpressionAttributeValues": {
+              ":c": "$input.path('$.completed.S')"
+            },
+            "UpdateExpression": "SET #C = :c",
+            "ReturnValues": "UPDATED_NEW"
+          }`
         },
       },
     });
@@ -157,7 +194,22 @@ export class TodoAppStack extends cdk.Stack {
         },
       }],
     });
-    todoResource.addResource('{id}').addMethod('DELETE', removeTodosIntegration, {
+
+    const todoResourceById = todoResource.addResource('{id}');
+
+    todoResourceById.addMethod('DELETE', removeTodosIntegration, {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+        },
+        responseModels: {
+          'application/json': responseModel,
+        },
+      }],
+    });
+
+    todoResourceById.addMethod('PUT', updateTodosIntegration, {
       methodResponses: [{
         statusCode: '200',
         responseParameters: {

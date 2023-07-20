@@ -10,7 +10,7 @@
           <Button icon="pi pi-plus" @click="addTodo" />
         </div>
         <ul class="p-mt-3">
-          <TodoItem v-for="todo in todos" :key="todo.id.S" :todo="todo" @remove="removeTodo" @toggle-completed="updateTodo" />
+          <TodoItem v-for="(todo, index) in todos" :key="index" :todo="todo" @remove="removeTodo" @toggle-completed="updateTodo" />
         </ul>
       </template>
     </Card>
@@ -47,16 +47,21 @@ export default {
       todos.value = todos.value.filter(t => t.id !== todo.id);
     };
 
-    const updateTodo = (updatedTodo) => {
+    const updateTodo = async (updatedTodo) => {
       const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
       if (index !== -1) {
         todos.value.splice(index, 1, updatedTodo);
       }
+      console.log(updatedTodo);
+      await axios.put(`https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos/${updatedTodo.id.S}`, updatedTodo);
     };
 
     const fetchTodos = async () => {
       const response = await axios.get('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos');
-      todos.value = response.data.todos;
+      todos.value = response.data.todos.map(todo => ({
+        ...todo,
+        completed: { BOOL: todo.completed.S === 'true' }
+      }));
     };
 
     fetchTodos();

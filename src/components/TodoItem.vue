@@ -1,7 +1,7 @@
 <template>
     <ul class="p-d-flex p-ai-center p-jc-between">
       <div class="p-d-flex p-ai-center">
-        <Checkbox binary :modelValue="todo.completed.BOOL" :value="true" :false-value="false" @update:modelValue="toggleCompleted" />
+        <Checkbox binary :modelValue="todo.completed.BOOL"  @update:modelValue="toggleCompleted" />
         <span>{{ todo.title.S }}</span>
         <Button icon="pi pi-times" class="p-button-text p-button-danger" @click="removeTodo" />
       </div>
@@ -28,7 +28,7 @@
       };
   
       const toggleCompleted = (completed) => {
-        emit('toggle-completed', { ...todo.value, completed: { BOOL: completed } });
+        emit('toggle-completed', { ...todo.value, completed: { S: completed.toString() } });
       };
   
       return {
