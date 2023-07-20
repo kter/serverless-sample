@@ -1,12 +1,13 @@
 <template>
-    <li class="p-d-flex p-ai-center p-jc-between">
+    <ul class="p-d-flex p-ai-center p-jc-between">
       <div class="p-d-flex p-ai-center">
-        <Checkbox :modelValue="todo.completed.BOOL" :value="true" :false-value="false" class="p-mr-2" @update:modelValue="toggleCompleted" />
+        <Checkbox :modelValue="todo.completed.BOOL" :value="true" :false-value="false" @update:modelValue="toggleCompleted" />
         <span>{{ todo.title.S }}</span>
-        <Button icon="pi pi-times" class="p-button-danger" @click="removeTodo" />
+        <Button icon="pi pi-times" class="p-button-text p-button-danger" @click="removeTodo" />
       </div>
-    </li>
+    </ul>
   </template>
+  
   
   <script>
   import { toRefs } from 'vue';
@@ -39,11 +40,38 @@
   </script>
   
   <style scoped>
-  li {
+  ul {
     padding: 1em;
-    border: 1px solid #ddd;
+    border: none;
     margin-bottom: 0.5em;
+    margin-right: 20em;
+    margin-left: 20em;
     border-radius: 5px;
+    background-color: #f8f9fa;
+  }
+  
+  ul .p-button-text.p-button-danger {
+    color: #dc3545;
+  }
+  
+  ul .p-checkbox .p-checkbox-box {
+    border-color: #6c757d;
+  }
+  
+  ul .p-checkbox.p-checkbox-checked .p-checkbox-box {
+    border-color: #28a745;
+    background-color: #28a745;
+  }
+
+  ul .p-d-flex .p-ai-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .p-checkbox.p-component {
+    margin-right: 1em;
   }
   </style>
+  
   
