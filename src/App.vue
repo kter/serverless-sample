@@ -1,60 +1,89 @@
 <template>
-  <div id="app">
-    <form @submit.prevent="addTodo">
-      <input v-model="newTodo" type="text" placeholder="Add todo" />
-      <input type="submit" value="Add" />
-    </form>
-
-    <div v-if="todos.length">
-      <h2>Todos:</h2>
-      <TodoItem
-        v-for="(todo, index) in todos"
-        :key="index"
-        :todo="todo"
-        @remove="removeTodo"
-        @toggle-completed="toggleCompleted"
-      />
-    </div>
-
-    <div v-else>
-      <h2>No todos!</h2>
-    </div>
+  <div class="p-d-flex p-jc-center p-ai-center p-dir-col" style="height: 100vh;">
+    <Card>
+      <template #title>
+        <h2>TODO App</h2>
+      </template>
+      <template #content>
+        <div class="p-d-flex p-ai-center">
+          <InputText v-model="newTodo" placeholder="New todo" class="p-mr-2" />
+          <Button icon="pi pi-plus" @click="addTodo" />
+        </div>
+        <ul class="p-mt-3">
+          <TodoItem v-for="todo in todos" :key="todo.id.S" :todo="todo" @remove="removeTodo" @toggle-completed="updateTodo" />
+        </ul>
+      </template>
+    </Card>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
-import TodoItem from './components/TodoItem.vue'
+import { ref } from 'vue';
+import axios from 'axios';
+import Card from 'primevue/card';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import TodoItem from './components/TodoItem.vue';
 
 export default {
-  components: { TodoItem },
-  data() {
-    return {
-      todos: [],
-      newTodo: '',
-    }
+  components: {
+    Card,
+    InputText,
+    Button,
+    TodoItem
   },
-  methods: {
-    async addTodo() {
-      const response = await axios.post('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos', { title: this.newTodo });
-      this.todos.push(response.data.todos);
-      this.newTodo = '';
-    },
-    async removeTodo(todo) {
+  setup() {
+    const todos = ref([]);
+    const newTodo = ref('');
+
+    const addTodo = async () => {
+      await axios.post('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos', { title: newTodo.value });
+      fetchTodos();
+      newTodo.value = '';
+    };
+
+    const removeTodo = async (todo) => {
       await axios.delete(`https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos/${todo.id}`);
-      this.todos = this.todos.filter(t => t.id !== todo.id);
-    },
-    toggleCompleted(todo) {
-      todo.completed = !todo.completed;
-    },
-  },
-  async created() {
-    const response = await axios.get('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos');
-    this.todos = response.data.todos;
+      todos.value = todos.value.filter(t => t.id !== todo.id);
+    };
+
+    const updateTodo = (updatedTodo) => {
+      const index = todos.value.findIndex(todo => todo.id === updatedTodo.id);
+      if (index !== -1) {
+        todos.value.splice(index, 1, updatedTodo);
+      }
+    };
+
+    const fetchTodos = async () => {
+      const response = await axios.get('https://azbwhqaqg2.execute-api.ap-northeast-1.amazonaws.com/prod/todos');
+      todos.value = response.data.todos;
+    };
+
+    fetchTodos();
+
+    return {
+      todos,
+      newTodo,
+      addTodo,
+      removeTodo,
+      updateTodo
+    };
   }
-}
+};
 </script>
 
 <style>
-/* Styles here */
+#app {
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
+
+.todo-item {
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  margin-bottom: 10px;
+}
 </style>
